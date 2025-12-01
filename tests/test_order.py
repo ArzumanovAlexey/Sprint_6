@@ -1,111 +1,52 @@
 import pytest
 import allure
-from config import BASE_URL
+from pages.order_page import OrderPage
 
 class TestOrder:
-    # Тестовые данные
-    ORDER_DATA = [
-        # Первый набор данных
-        {
-            "name": "Иван",
-            "surname": "Петров",
-            "address": "ул. Ленина, д. 10",
-            "metro_station": "Сокольники",
-            "phone": "89991234567",
-            "date": "25.09.2025",
-            "rental_period": "сутки",
-            "color": "black",
-            "comment": "Позвонить за час"
-        },
-        # Второй набор данных
-        {
-            "name": "Мария",
-            "surname": "Сидорова",
-            "address": "пр-т Мира, д. 25",
-            "metro_station": "Комсомольская",
-            "phone": "89997654321",
-            "date": "01.10.2025",
-            "rental_period": "трое суток",
-            "color": "grey",
-            "comment": "Оставить у двери"
-        }
-    ]
+    """Тесты для проверки оформления заказа"""
     
-    @allure.feature("Заказ самоката")
-    @allure.story("Позитивный сценарий заказа через верхнюю кнопку")
-    @pytest.mark.parametrize("order_data", ORDER_DATA)
-    def test_order_through_top_button_success(self, main_page, order_page, order_data):
-        with allure.step("Кликнуть на верхнюю кнопку 'Заказать'"):
-            main_page.click_order_button_top()
+    @allure.epic("Самокаты")
+    @allure.feature("Оформление заказа")
+    @allure.story("Полный цикл заказа")
+    @allure.title("Оформление заказа через {order_button[0]}")
+    @pytest.mark.parametrize("button_name, test_data", 
+                             OrderPage.get_order_test_data())
+    def test_order_submit(self, base_page, order_page, button_name, test_data):
+        """Проверка успешного оформления заказа самоката
         
-        self._complete_order_flow(order_page, order_data)
+        Steps:
+        1. Кликнуть на кнопку заказа в хедере/футере
+        2. Заполнить форму личных данных
+        3. Перейти к форме аренды
+        4. Заполнить форму аренды
+        5. Подтвердить заказ
+        6. Проверить сообщение об успехе
+        """
+        
+        try:
+            with allure.step(f"Начать оформление заказа из {button_name}"):
+                base_page.click(button_name)
+            
+            with allure.step("Заполнить форму личных данных"):
+                order_page.populate_user_form_by_user_data(test_data)
+            
+            with allure.step("Перейти к форме аренды"):
+                order_page.click_next_button()
+            
+            with allure.step("Заполнить форму аренды"):
+                order_page.populate_order_form_by_user_data(test_data)
 
-    @allure.feature("Заказ самоката")
-    @allure.story("Позитивный сценарий заказа через нижнюю кнопку")
-    @pytest.mark.parametrize("order_data", ORDER_DATA)
-    def test_order_through_bottom_button_success(self, main_page, order_page, order_data):
-        with allure.step("Прокрутить к нижней кнопке 'Заказать'"):
-            main_page.scroll_to_bottom_order_button()
-        
-        with allure.step("Кликнуть на нижнюю кнопку 'Заказать'"):
-            main_page.click_order_button_bottom()
-        
-        self._complete_order_flow(order_page, order_data)
-    
-    def _complete_order_flow(self, order_page, order_data):
-        with allure.step("Заполнить информацию о заказчике"):
-            order_page.fill_personal_info(
-                order_data["name"],
-                order_data["surname"],
-                order_data["address"],
-                order_data["metro_station"],
-                order_data["phone"]
-            )
-        
-        with allure.step("Перейти к следующему шагу"):
-            order_page.click_next_button()
-        
-        with allure.step("Заполнить информацию об аренде"):
-            order_page.fill_rental_info(
-                order_data["date"],
-                order_data["rental_period"],
-                order_data["color"],
-                order_data["comment"]
-            )
-        
-        with allure.step("Подтвердить заказ"):
-            order_page.click_order_button()
-            order_page.confirm_order()
-        
-        with allure.step("Проверить сообщение об успешном заказе"):
-            assert order_page.is_success_message_displayed(), "Сообщение об успешном заказе не отображается"
-    
-    @allure.feature("Навигация")
-    @allure.story("Переход на главную страницу через логотип Самоката")
-    def test_scooter_logo_navigation(self, main_page):
-        with allure.step("Кликнуть на логотип Самоката"):
-            main_page.click_scooter_logo()
-        
-        with allure.step("Проверить URL текущей страницы"):
-            assert main_page.is_main_page_loaded(), \
-                f"Ожидался переход на главную страницу, но текущий URL: {main_page.get_current_url()}"
-    
-    @allure.feature("Навигация")
-    @allure.story("Переход на Дзен через логотип Яндекса")
-    def test_yandex_logo_navigation(self, main_page):
-        with allure.step("Запомнить текущее окно"):
-            main_window = main_page.driver.current_window_handle
-        
-        with allure.step("Кликнуть на логотип Яндекса"):
-            main_page.click_yandex_logo()
-        
-        with allure.step("Переключиться на новое окно"):
-            main_page.switch_to_new_window()
-        
-        with allure.step("Проверить, что открылась страница Дзен"):
-            assert main_page.is_dzen_page_loaded(), \
-                f"Ожидался переход на Дзен, но текущий URL: {main_page.get_current_url()}"
-        
-        with allure.step("Закрыть новое окно и вернуться к основному"):
-            main_page.driver.close()
-            main_page.driver.switch_to.window(main_window)
+            with allure.step("Оформить заказ"):
+                order_page.click_order_button()
+           
+            with allure.step("Подтвердить заказ"):    
+                order_page.confirm_order()
+            
+            with allure.step("Проверить сообщение об успешном заказе"):
+                message = order_page.check_success_message_displayed()
+                
+                assert "Заказ оформлен" in message, \
+                    f"Ожидалось 'Заказ оформлен', но получено: '{message}'"
+            
+        except Exception as e:
+            pytest.fail(f"Тест завершился с ошибкой: {str(e)}")

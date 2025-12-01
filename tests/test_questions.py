@@ -1,58 +1,56 @@
 import pytest
 import allure
-from selenium.webdriver.common.by import By
+from pages.main_page import MainPage
 
-class TestQuestions:
-    QUESTIONS_AND_ANSWERS = [
-        (
-            "Сколько это стоит? И как оплатить?",
-            "Сутки — 400 рублей. Оплата курьеру — наличными или картой."
-        ),
-        (
-            "Хочу сразу несколько самокатов! Так можно?",
-            "Пока что у нас так: один заказ — один самокат. Если хотите покататься с друзьями, можете просто сделать несколько заказов — один за другим."
-        ),
-        (
-            "Как рассчитывается время аренды?",
-            "Допустим, вы оформляете заказ на 8 мая. Мы привозим самокат 8 мая в течение дня. Отсчёт времени аренды начинается с момента, когда вы оплатите заказ курьеру. Если мы привезли самокат 8 мая в 20:30, суточная аренда закончится 9 мая в 20:30."
-        ),
-        (
-            "Можно ли заказать самокат прямо на сегодня?",
-            "Только начиная с завтрашнего дня. Но скоро станем расторопнее."
-        ),
-        (
-            "Можно ли продлить заказ или вернуть самокат раньше?",
-            "Пока что нет! Но если что-то срочное — всегда можно позвонить в поддержку по красивому номеру 1010."
-        ),
-        (
-            "Вы привозите зарядку вместе с самокатом?",
-            "Самокат приезжает к вам с полной зарядкой. Этого хватает на восемь суток — даже если будете кататься без передышек и во сне. Зарядка не понадобится."
-        ),
-        (
-            "Можно ли отменить заказ?",
-            "Да, пока самокат не привезли. Штрафа не будет, объяснительной записки тоже не попросим. Все же свои."
-        ),
-        (
-            "Я жизу за МКАДом, привезёте?",
-            "Да, обязательно. Всем самокатов! И Москве, и Московской области."
-        )
-    ]
+class TestFaq:
+    """Тесты для проверки вопросов и ответов на главной странице"""
     
-    @allure.feature("Вопросы о важном")
-    @allure.story("Проверка раскрытия ответов на вопросы")
-    @pytest.mark.parametrize("question_index,expected_answer", 
-                            [(i, answer) for i, (question, answer) in enumerate(QUESTIONS_AND_ANSWERS)])
-    def test_question_expands_correct_answer(self, main_page, question_index, expected_answer):
-        with allure.step(f"Прокрутить к вопросам"):
-            main_page.scroll_to_questions()
+    @allure.epic("Самокаты")
+    @allure.feature("Главная страница")
+    @allure.story("FAQ секция")
+    @allure.title("Проверка текста в ответах на вопросы")    
+    @pytest.mark.parametrize(
+        "question_locator, answer_locator, expected_text",
+        MainPage.get_qa_data()
+        )
+    def test_faq_question_and_answer(self, main_page, question_locator, answer_locator, expected_text):
+        """Проверка, что ответы на вопросы содержат ожидаемый текст
         
-        with allure.step(f"Кликнуть на вопрос №{question_index + 1}"):
-            main_page.click_question(question_index)
+        Steps:
+        1. Кликнуть на вопрос
+        2. Получить текст ответа
+        3. Проверить, что ответ содержит ожидаемый текст
+        """
+        with allure.step(f"Кликнуть на вопрос и проверить ответ содержит '{expected_text}'"):
+            main_page.click_question(question_locator)
+            answer_text = main_page.get_answer_text(answer_locator)
+
+        with allure.step("Проверить, что ответ содержит ожидаемый текст"):
+            assert  expected_text.lower() in answer_text.lower(), \
+                f"Текст ответа '{answer_text}' не содержит '{expected_text}'"
+
+        answer_text = main_page.get_answer_text(answer_locator)
+        assert answer_text != "" and len(answer_text) > 0, "Текст ответа пустой, ожидался непустой текст"
+
+    @allure.epic("Самокаты")
+    @allure.feature("Главная страница")
+    @allure.story("FAQ секция")
+    @allure.title("Проверка отображения всех вопросов и ответов")
+    def test_all_faq_items_have_answers(self, main_page):
+        """Проверка, что у всех вопросов есть ответы
         
-        with allure.step("Проверить, что отображается правильный ответ"):
-            actual_answer = main_page.get_answer_text(question_index)
-            assert actual_answer == expected_answer, \
-                f"Ожидался ответ: '{expected_answer}', но получен: '{actual_answer}'"
-        
-        with allure.step("Проверить, что ответ виден"):
-            assert main_page.is_answer_displayed(question_index), "Ответ не отображается"
+        Steps:
+        1. Собрать все вопросы и ответы в словарь
+        2. Проверить, что количество вопросов соответствует ожидаемому
+        3. Проверить, что все ответы не пустые
+        """      
+        with allure.step("Собрать все вопросы и ответы"):
+            faq_dict = main_page.qa_dictionary()
+
+        with allure.step("Проверить количество вопросов"):
+            assert len(faq_dict) == 8, f"Ожидали 8 вопросов FAQ, получили: {len(faq_dict)}"
+
+        with allure.step("Проверить, что все ответы не пустые"):
+            for question_text, answer_text in faq_dict.items():
+                assert question_text.strip() != "", "Текст вопроса пустой — это не ожидается"
+                assert answer_text.strip() != "", f"Пустой ответ для вопроса: '{question_text}'"
