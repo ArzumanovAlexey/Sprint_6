@@ -3,23 +3,6 @@ from locators.main_page_locators import MainPageLocators
 
 class MainPage(BasePage):
     """Методы для работы с главной страницей"""
-
-    
-    @staticmethod
-    def get_qa_data():
-        """Получить тестовые данные для проверки вопросов и ответов"""
-        
-        return [
-            (MainPageLocators.PRICE_QUESTION, MainPageLocators.PRICE_ANSWER, "Сутки — 400 рублей. Оплата курьеру — наличными или картой."),
-            (MainPageLocators.ORDER_SEVERAL_SCOOTERS_QUESTION, MainPageLocators.ORDER_SEVERAL_SCOOTERS_ANSWER, "один заказ — один самокат"),
-            (MainPageLocators.ORDER_TIME_QUESTION, MainPageLocators.ORDER_TIME_ANSWER, " когда вы оплатите заказ"),
-            (MainPageLocators.TODAY_ORDER_QUESTION, MainPageLocators.TODAY_ORDER_ANSWER, "с завтрашнего дня"),
-            (MainPageLocators.EXTEND_ORDER_QUESTION, MainPageLocators.EXTEND_ORDER_ANSWER, "номеру 1010"),
-            (MainPageLocators.CHARGER_QUESTION, MainPageLocators.CHARGER_ANSWER, "полной зарядкой"),
-            (MainPageLocators.CANCEL_ORDER_QUESTION, MainPageLocators.CANCEL_ORDER_ANSWER, "Штрафа не будет"),
-            (MainPageLocators.OUTSIDE_MKAD_ORDER_QUESTION, MainPageLocators.OUTSIDE_MKAD_ORDER_ANSWER, "Всем самокатов!"),
-        ]
-    
     
     def click_question(self, question_locator):
         """Кликнуть на вопрос в секции FAQ"""
@@ -27,8 +10,8 @@ class MainPage(BasePage):
         question_element = self.find_element(question_locator)
         if question_element is None:
             raise AssertionError(f"Элемент вопроса не найден: {question_locator}")
-        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", question_element)
-        self.driver.execute_script("arguments[0].click();", question_element)
+        self.scroll_to_element_center(question_element)
+        self.click_element_via_script(question_element)
         return question_element
     
     def click_order_button(self, btn_locator=None):

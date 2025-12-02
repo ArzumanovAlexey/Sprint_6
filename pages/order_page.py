@@ -1,43 +1,9 @@
-from locators.main_page_locators import MainPageLocators
 from pages.base_page import BasePage
-from datetime import date
 from locators.order_page_locators import OrderPageLocators
-import random as r
 
 
 class OrderPage(BasePage):
     """Методы для работы со страницей заказа"""
-    
-    @staticmethod
-    def user_data():
-        """Генерация случайных тестовых данных пользователя"""
-        
-        names = ['Иван', 'Петр', 'Коля', 'Ваня', 'Сергей']
-        surnames = ['Иванов', 'Петров', 'Сидоров', 'Кузнецов', 'Смирнов']
-        metro_stations = ['Бульвар Рокоссовского', 'Спартак', 'Красные ворота', 'Лихоборы']
-        rental_period = ['сутки', 'двое суток', 'трое суток', 'четверо суток', 'пятеро суток', 'шестеро суток', 'семеро суток']
-        color = ['серая безысходность', 'чёрный жемчуг']
-        user_data = {
-                    'name': r.choice(names), 
-                    'surname': r.choice(surnames),
-                    'address': 'Москва, улица Большая Лубянка, 20с2',
-                    'metro': r.choice(metro_stations),
-                    'phone': f'+7{r.randint(1111111111, 9999999999)}',
-                    'date': f'{date.today()}',
-                    'period': r.choice(rental_period),
-                    'color': r.choice(color),
-                    'comment': 'Позвонить по телефону за 15 минут' 
-                }
-        return user_data
-    
-    @staticmethod
-    def get_order_test_data():
-        """Возвращает тестовые случаи для заказов"""
-        
-        return [
-            (MainPageLocators.ORDER_BTN_HEADER, OrderPage.user_data()),
-            (MainPageLocators.ORDER_BTN_FOOTER, OrderPage.user_data())
-        ]
     
     def select_metro_station_from_dropdown(self, test_data):
         """Выбор станции метро из выпадающего списка"""
@@ -107,4 +73,3 @@ class OrderPage(BasePage):
         
         success_message = self.find_element(OrderPageLocators.SUCCESS_MESSAGE)
         return success_message.text
-        

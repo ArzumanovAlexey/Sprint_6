@@ -12,6 +12,8 @@ class BasePage:
         self.driver = driver
         self.timeout = Config.TIMEOUT
         self.wait = WebDriverWait(driver, self.timeout)
+
+    
     
     
     def find_element(self, locator):
@@ -32,13 +34,26 @@ class BasePage:
             print(f"Элементы {locator} не найдены за отведенное время")
             return []
        
+    def execute_script(self, script, *args):
+        """Выполнение JavaScript кода"""
+        return self.driver.execute_script(script, *args)
+    
     def scroll_to_element(self, locator):
         """Скролл к указанному элементу"""     
         element = self.find_element(locator)
-        self.driver.execute_script("arguments[0].scrollIntoView();", element)
+        self.execute_script("arguments[0].scrollIntoView();", element)
+    
     def scroll_to_bottom(self):
         """Скролл до нижней части страницы"""
-        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        self.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    
+    def scroll_to_element_center(self, element):
+        """Скролл к элементу с центрированием"""
+        self.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+    
+    def click_element_via_script(self, element):
+        """Клик по элементу через JavaScript"""
+        self.execute_script("arguments[0].click();", element)
     
     def input_text(self, locator, text):
         """Ввод текста в поле"""   
@@ -55,30 +70,46 @@ class BasePage:
         except TimeoutException:
             print(f"Элемент {locator} не найден за отведенное время")
             
+    def get_current_url(self):
+        """Получить текущий URL страницы"""
+        return self.driver.current_url
+    
     def check_page_url(self, page):
         """Проверяет URL страницы"""
         match page:
             case 'main_page':
                 self.wait.until(EC.url_matches(f"^{Config.BASE_URL}.*"))
-                return self.driver.current_url
+                return self.get_current_url()
             case 'order_page':
                 self.wait.until(EC.url_contains(Config.ORDER_PAGE_URL))
-                return self.driver.current_url
+                return self.get_current_url()
             case 'dzen_page':
                 self.wait.until(EC.url_contains("dzen"))
-                return self.driver.current_url
+                return self.get_current_url()
             case _:
                 raise ValueError(f"Страница: {page} не найдена")
     
+    def get_current_window_handle(self):
+        """Получить handle текущего окна"""
+        return self.driver.current_window_handle
+    
+    def get_window_handles(self):
+        """Получить все handles окон"""
+        return self.driver.window_handles
+    
+    def switch_to_window(self, window_handle):
+        """Переключиться на указанное окно"""
+        self.driver.switch_to.window(window_handle)
+    
     def switch_new_window(self):
         """Выполнить переход на другую вкладку в браузере"""
-        original_window = self.driver.current_window_handle
+        original_window = self.get_current_window_handle()
         # Ждем появления нового окна
         self.wait.until(EC.number_of_windows_to_be(2))
         # Находим новое окно
-        for window_handle in self.driver.window_handles:
+        for window_handle in self.get_window_handles():
             if window_handle != original_window:
-                self.driver.switch_to.window(window_handle)
+                self.switch_to_window(window_handle)
                 return window_handle
         raise Exception("Новое окно не найдено")
     
